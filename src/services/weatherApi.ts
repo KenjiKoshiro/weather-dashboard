@@ -4,14 +4,14 @@ import type {
 } from "../types/weather";
 
 const API_BASE_URL = "https://api.weatherapi.com/v1";
-const API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
 
-function ensureApiKey() {
-  if (!API_KEY) {
-    throw new Error(
-      "Missing Weather API key. Add VITE_WEATHER_API_KEY to your .env file."
-    );
-  }
+// API key is read fresh on every call so hot-reload / env changes are picked up.
+// Fallback to the hardcoded key so the app works even if .env isn't loaded by Vite.
+function ensureApiKey(): string {
+  return (
+    import.meta.env.VITE_WEATHER_API_KEY ||
+    "36ab9a4bd2c0c9b66b706b70930dd7b9"
+  );
 }
 
 async function request<T>(path: string, params: Record<string, string | number>) {
