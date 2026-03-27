@@ -9,8 +9,9 @@ const API_BASE_URL = "https://api.weatherapi.com/v1";
 // Fallback to the hardcoded key so the app works even if .env isn't loaded by Vite.
 function ensureApiKey(): string {
   return (
-    import.meta.env.VITE_WEATHER_API_KEY ||
-    "36ab9a4bd2c0c9b66b706b70930dd7b9"
+    import.meta.env.VITE_WEATHER_API_KEY
+    if (!key) throw new Error("Missing VITE_WEATHER_API_KEY in .env file");
+  return key;
   );
 }
 
