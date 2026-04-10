@@ -1,48 +1,81 @@
-import type { UnitSystem, WeatherApiForecastDay } from "../types/weather";
-import { formatDayName, getTemperature, getTemperatureUnit } from "../utils/weatherFormat";
-import { SectionHeading } from "./SectionHeading";
+import { motion } from "framer-motion";
+import { DailyForecast as DailyType, UnitSystem } from "../types/weather";
 import { WeatherIcon } from "./WeatherIcon";
+import { CloudRain } from "lucide-react";
 
 interface DailyForecastProps {
-  days: WeatherApiForecastDay[];
+  days: DailyType[];
   unit: UnitSystem;
 }
 
 export function DailyForecast({ days, unit }: DailyForecastProps) {
-  const tempUnit = getTemperatureUnit(unit);
+  const formatTemp = (temp: number) => {
+    const val = unit === "c" ? temp : (temp * 9/5) + 32;
+    return Math.round(val);
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const today = new Date();
+    if (date.toDateString() === today.toDateString()) return "Today";
+    
+    return date.toLocaleDateString('en-US', { weekday: 'short' });
+  };
 
   return (
-    <section className="rounded-[2rem] border border-white/30 bg-white/55 p-6 shadow-2xl shadow-slate-900/10 backdrop-blur-2xl dark:border-white/10 dark:bg-slate-900/45">
-      <SectionHeading
-        eyebrow="7-day trend"
-        title="Daily forecast"
-        subtitle="A weekly view with min and max temperatures, conditions, and rain probability."
-      />
-
-      <div className="mt-6 space-y-3">
-        {days.map((day) => (
-          <article
-            key={day.date}
-            className="grid items-center gap-4 rounded-[1.5rem] border border-white/30 bg-white/60 p-4 shadow-lg shadow-slate-900/5 transition hover:-translate-y-0.5 dark:border-white/10 dark:bg-slate-950/35 sm:grid-cols-[110px_minmax(0,1fr)_auto_auto]"
-          >
-            <div>
-              <p className="text-base font-semibold text-slate-900 dark:text-white">{formatDayName(day.date)}</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">{day.date}</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <WeatherIcon icon={day.day.condition.icon} alt={day.day.condition.text} size={48} className="h-12 w-12" />
-              <p className="text-sm text-slate-700 dark:text-slate-200">{day.day.condition.text}</p>
-            </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              Rain {day.day.daily_chance_of_rain ?? 0}%
-            </p>
-            <p className="text-base font-semibold text-slate-900 dark:text-white">
-              {getTemperature(day.day.mintemp_c, day.day.mintemp_f, unit)}{tempUnit} / {" "}
-              {getTemperature(day.day.maxtemp_c, day.day.maxtemp_f, unit)}{tempUnit}
-            </p>
-          </article>
-        ))}
+    <motion.section variants={itemVariants} className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-bold uppercase tracking-widest text-blue-500">5-Day Forecast</h3>
+        <div className="h-px flex-1 bg-white/10 mx-4" />
       </div>
-    </section>
+
+      <div className="zenith-glass zenith-card overflow-hidden">
+        <div className="divide-y divide-white/5">
+          {days.map((day, i) => (
+            <motion.div
+              key={day.date}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.1 }}
+              className="flex items-center justify-between py-4 px-2 first:pt-0 last:pb-0"
+            >
+              <div className="w-20">
+                <p className="text-sm font-bold">{formatDate(day.date)}</p>
+                <p className="text-[10px] font-bold text-slate-500 dark:text-slate-300">{new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+              </div>
+
+              <div className="flex flex-1 items-center justify-center gap-8 px-4">
+                <div className="flex items-center gap-4">
+                  <WeatherIcon code={day.condition.code} size={28} />
+                  <span className="hidden text-sm font-medium sm:block">{day.condition.text}</span>
+                </div>
+                
+                {day.precipitationProbability > 0 && (
+                  <div className="flex items-center gap-1.5 text-blue-500">
+                    <CloudRain className="h-3 w-3" />
+                    <span className="text-[10px] font-bold">{day.precipitationProbability}%</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex w-32 items-center justify-end gap-4">
+                <div className="text-right">
+                  <span className="text-sm font-bold">{formatTemp(day.maxTemp)}°</span>
+                  <div className="relative mt-1 h-1 w-12 overflow-hidden rounded-full bg-slate-200 dark:bg-white/5">
+                    <div className="absolute inset-y-0 left-1/4 right-1/4 bg-blue-500" />
+                  </div>
+                </div>
+                <span className="text-sm font-bold text-slate-400">{formatTemp(day.minTemp)}°</span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </motion.section>
   );
 }

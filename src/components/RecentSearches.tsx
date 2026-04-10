@@ -1,49 +1,64 @@
-import type { RecentSearchItem } from "../types/weather";
-import { SectionHeading } from "./SectionHeading";
+import { motion, AnimatePresence } from "framer-motion";
+import { RecentSearchItem } from "../types/weather";
+import { MapPin, X, History } from "lucide-react";
 
 interface RecentSearchesProps {
   items: RecentSearchItem[];
-  onSelect: (query: string) => void;
+  onSelect: (id: string) => void;
+  onRemove: (id: string) => void;
 }
 
-export function RecentSearches({ items, onSelect }: RecentSearchesProps) {
-  return (
-    <aside className="rounded-[2rem] border border-white/30 bg-white/55 p-6 shadow-2xl shadow-slate-900/10 backdrop-blur-2xl dark:border-white/10 dark:bg-slate-900/45">
-      <SectionHeading
-        eyebrow="Saved"
-        title="Recent searches"
-        subtitle="Quickly jump back into cities you checked recently."
-      />
+export function RecentSearches({ items, onSelect, onRemove }: RecentSearchesProps) {
+  if (items.length === 0) return null;
 
-      <div className="mt-6 space-y-3">
-        {items.length === 0 ? (
-          <div className="rounded-[1.5rem] border border-dashed border-slate-300/70 p-5 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
-            Your recent city searches will appear here.
-          </div>
-        ) : (
-          items.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => onSelect(item.query)}
-              className="flex w-full items-center justify-between rounded-[1.5rem] border border-white/30 bg-white/60 px-4 py-3 text-left shadow-lg shadow-slate-900/5 transition hover:-translate-y-0.5 hover:bg-white dark:border-white/10 dark:bg-slate-950/35 dark:hover:bg-slate-900/60"
-            >
-              <span>
-                <span className="block text-sm font-semibold text-slate-900 dark:text-white">{item.label}</span>
-                <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
-                  {new Intl.DateTimeFormat("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                  }).format(item.searchedAt)}
-                </span>
-              </span>
-              <span className="text-slate-400 dark:text-slate-500">↗</span>
-            </button>
-          ))
-        )}
+  return (
+    <motion.section 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-4"
+    >
+      <div className="flex items-center gap-2">
+        <History className="h-4 w-4 text-blue-500" />
+        <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">Recent Expeditions</h3>
       </div>
-    </aside>
+
+      <div className="flex flex-col gap-2">
+        <AnimatePresence mode="popLayout">
+          {items.map((item) => (
+            <motion.div
+              key={item.id}
+              layout
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="group relative"
+            >
+              <button
+                onClick={() => onSelect(item.id)}
+                className="zenith-glass flex w-full items-center gap-3 rounded-2xl p-4 pr-12 text-left transition-all hover:bg-blue-500/10 active:scale-[0.98]"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5 group-hover:bg-blue-500/20 group-hover:text-blue-500 transition-colors">
+                  <MapPin className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-bold">{item.name}</p>
+                  <p className="truncate text-[10px] font-bold uppercase tracking-tighter text-slate-500">{item.country}</p>
+                </div>
+              </button>
+              
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove(item.id);
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-2 text-slate-400 opacity-0 transition-all hover:bg-red-500/10 hover:text-red-500 group-hover:opacity-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+    </motion.section>
   );
 }

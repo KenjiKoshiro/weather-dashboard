@@ -1,3 +1,6 @@
+import { motion } from "framer-motion";
+import { AlertCircle, RefreshCcw } from "lucide-react";
+
 interface ErrorMessageProps {
   message: string;
   onRetry?: () => void;
@@ -5,24 +8,33 @@ interface ErrorMessageProps {
 
 export function ErrorMessage({ message, onRetry }: ErrorMessageProps) {
   return (
-    <div className="rounded-3xl border border-rose-200 bg-rose-50/90 p-6 text-rose-900 shadow-lg shadow-rose-500/5 backdrop-blur dark:border-rose-500/20 dark:bg-rose-950/30 dark:text-rose-100">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-rose-500 dark:text-rose-300">
-            Request failed
-          </p>
-          <p className="mt-2 text-sm leading-6">{message}</p>
+    <div className="flex min-h-[40vh] items-center justify-center p-6">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="zenith-glass zenith-card max-w-md space-y-6 text-center"
+      >
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-red-500/10 text-red-500">
+          <AlertCircle className="h-8 w-8" />
         </div>
-        {onRetry ? (
+        
+        <div className="space-y-2">
+          <h3 className="text-xl font-bold tracking-tight">Cosmic Interference</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {message || "We encountered an atmospheric disturbance while fetching your data."}
+          </p>
+        </div>
+
+        {onRetry && (
           <button
-            type="button"
             onClick={onRetry}
-            className="inline-flex items-center justify-center rounded-full bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-500 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/30 transition-all hover:bg-blue-600 active:scale-95"
           >
-            Try again
+            <RefreshCcw className="h-4 w-4" />
+            Recalibrate Sensors
           </button>
-        ) : null}
-      </div>
+        )}
+      </motion.div>
     </div>
   );
 }

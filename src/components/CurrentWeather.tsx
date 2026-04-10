@@ -1,82 +1,134 @@
-import type { UnitSystem, WeatherApiForecastResponse } from "../types/weather";
-import {
-  formatFullDateTime,
-  formatLocationLabel,
-  getTemperature,
-  getTemperatureUnit,
-  getVisibility,
-  getWindSpeed,
-} from "../utils/weatherFormat";
+import { motion } from "framer-motion";
+import { 
+  Wind, 
+  Droplets, 
+  MapPin, 
+  Calendar,
+  Navigation,
+  Thermometer,
+  Eye,
+  Umbrella
+} from "lucide-react";
+import { CurrentWeather as CurrentWeatherType, UnitSystem } from "../types/weather";
 import { WeatherIcon } from "./WeatherIcon";
 
 interface CurrentWeatherProps {
-  data: WeatherApiForecastResponse;
+  data: CurrentWeatherType;
+  location: {
+    name: string;
+    country: string;
+  };
   unit: UnitSystem;
 }
 
-export function CurrentWeather({ data, unit }: CurrentWeatherProps) {
-  const { location, current } = data;
-  const locationLabel = formatLocationLabel(location.name, location.region, location.country);
-  const temperature = getTemperature(current.temp_c, current.temp_f, unit);
-  const feelsLike = getTemperature(current.feelslike_c, current.feelslike_f, unit);
-  const tempUnit = getTemperatureUnit(unit);
+export function CurrentWeather({ data, location, unit }: CurrentWeatherProps) {
+  const formatTemp = (temp: number) => {
+    const val = unit === "c" ? temp : (temp * 9/5) + 32;
+    return Math.round(val);
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
 
   return (
-    <section className="relative overflow-hidden rounded-[2rem] border border-white/30 bg-white/55 p-6 shadow-2xl shadow-slate-900/10 backdrop-blur-2xl dark:border-white/10 dark:bg-slate-900/45 lg:p-8">
-      <div className="absolute right-0 top-0 h-48 w-48 rounded-full bg-sky-300/20 blur-3xl dark:bg-sky-500/10" />
-      <div className="relative grid gap-8 xl:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.95fr)]">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-600 dark:text-sky-300">
-            Current conditions
-          </p>
-          <div className="mt-4 flex flex-wrap items-start justify-between gap-5">
-            <div>
-              <h2 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
-                {locationLabel}
-              </h2>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                {formatFullDateTime(location.localtime_epoch, "en-US", location.tz_id)}
-              </p>
-              <p className="mt-4 max-w-xl text-base text-slate-700 dark:text-slate-200">
-                {current.condition.text} with steady live updates for temperature, wind, visibility, and atmospheric conditions.
-              </p>
+    <motion.section 
+      variants={itemVariants}
+      className="zenith-glass zenith-card relative overflow-hidden"
+    >
+      {/* Decorative Blur */}
+      <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-blue-500/10 blur-[100px]" />
+      
+      <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+        <div className="space-y-6">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2 text-blue-500">
+              <MapPin className="h-4 w-4" />
+              <span className="text-xs font-bold uppercase tracking-widest">{location.country}</span>
             </div>
-
-            <div className="rounded-[1.75rem] border border-white/30 bg-white/60 p-5 text-center shadow-lg shadow-slate-900/5 dark:border-white/10 dark:bg-slate-950/40">
-              <WeatherIcon icon={current.condition.icon} alt={current.condition.text} size={96} className="mx-auto h-24 w-24" />
-              <div className="mt-2 text-5xl font-semibold tracking-tight text-slate-900 dark:text-white">
-                {temperature}
-                <span className="text-2xl text-slate-400 dark:text-slate-500">{tempUnit}</span>
+            <h2 className="text-4xl font-bold tracking-tight lg:text-5xl">{location.name}</h2>
+            <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-200">
+              <div className="flex items-center gap-1.5">
+                <Calendar className="h-4 w-4" />
+                <span>Today, {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</span>
               </div>
-              <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
-                Feels like {feelsLike}
-                {tempUnit}
-              </p>
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <DetailItem 
+              icon={<Wind className="h-4 w-4" />} 
+              label="Wind" 
+              value={`${data.windSpeed} km/h`} 
+            />
+            <DetailItem 
+              icon={<Droplets className="h-4 w-4" />} 
+              label="Humidity" 
+              value={`${data.humidity}%`} 
+            />
+            <DetailItem 
+              icon={<Eye className="h-4 w-4" />} 
+              label="Visibility" 
+              value={`${data.visibility.toFixed(1)} km`} 
+            />
+            <DetailItem 
+              icon={<Umbrella className="h-4 w-4" />} 
+              label="Rain" 
+              value={`${data.precipitation.toFixed(1)} mm`} 
+            />
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          {[
-            { label: "Humidity", value: `${current.humidity}%` },
-            { label: "Wind", value: getWindSpeed(current.wind_kph, current.wind_mph, unit) },
-            { label: "Pressure", value: `${Math.round(current.pressure_mb)} mb` },
-            { label: "Visibility", value: getVisibility(current.vis_km, current.vis_miles, unit) },
-            { label: "UV Index", value: `${current.uv}` },
-            { label: "Cloud Cover", value: `${current.cloud}%` },
-          ].map((item) => (
-            <div
-              key={item.label}
-              className="rounded-[1.5rem] border border-white/30 bg-white/60 p-5 shadow-lg shadow-slate-900/5 backdrop-blur dark:border-white/10 dark:bg-slate-950/35"
-            >
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500">
-                {item.label}
+        <div className="flex items-center gap-8 lg:flex-col lg:items-end">
+          <div className="flex items-center gap-6">
+            <div className="text-right">
+              <motion.div 
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                className="text-7xl font-bold tracking-tighter lg:text-8xl"
+              >
+                {formatTemp(data.temperature)}°
+              </motion.div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-300">
+                Feels like {formatTemp(data.feelsLike)}°
               </p>
-              <p className="mt-3 text-2xl font-semibold text-slate-900 dark:text-white">{item.value}</p>
             </div>
-          ))}
+            <WeatherIcon 
+              code={data.condition.code} 
+              isDay={data.isDay} 
+              size={120} 
+              className="lg:hidden"
+            />
+          </div>
+          
+          <div className="hidden items-center gap-3 rounded-[2rem] bg-black/5 p-4 dark:bg-white/5 lg:flex">
+             <div className="text-right">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-blue-500">Condition</p>
+              <p className="text-lg font-semibold">{data.condition.text}</p>
+             </div>
+             <WeatherIcon 
+              code={data.condition.code} 
+              isDay={data.isDay} 
+              size={48} 
+            />
+          </div>
         </div>
       </div>
-    </section>
+    </motion.section>
+  );
+}
+
+function DetailItem({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) {
+  return (
+    <div className="flex flex-col gap-2 rounded-3xl bg-black/5 p-4 transition-colors hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10">
+      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500/10 text-blue-500">
+        {icon}
+      </div>
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-300">{label}</p>
+        <p className="text-sm font-semibold">{value}</p>
+      </div>
+    </div>
   );
 }

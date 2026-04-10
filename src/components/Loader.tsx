@@ -1,9 +1,32 @@
+import { motion } from "framer-motion";
+
 export function Loader() {
   return (
-    <div className="flex min-h-[240px] items-center justify-center">
-      <div className="flex items-center gap-4 rounded-2xl border border-white/20 bg-white/50 px-5 py-4 text-sm font-medium text-slate-700 shadow-lg shadow-slate-900/5 backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/50 dark:text-slate-200">
-        <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-sky-500 dark:border-slate-600 dark:border-t-sky-400" />
-        Loading live weather data...
+    <div className="flex flex-col items-center justify-center gap-6">
+      <div className="relative h-24 w-24">
+        {/* Outer Ring */}
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+          className="absolute inset-0 rounded-[2.5rem] border-2 border-dashed border-blue-500/30"
+        />
+        
+        {/* Inner Ring */}
+        <motion.div
+          animate={{ rotate: -360 }}
+          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+          className="absolute inset-4 rounded-[1.5rem] border-2 border-blue-500/60"
+        />
+
+        {/* Core */}
+        <motion.div
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.5, 1, 0.5]
+          }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute inset-8 rounded-2xl bg-linear-to-br from-blue-500 to-cyan-400 shadow-lg shadow-blue-500/50"
+        />
       </div>
     </div>
   );

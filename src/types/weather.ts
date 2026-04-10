@@ -1,115 +1,82 @@
 export type UnitSystem = "c" | "f";
 
-export interface WeatherApiCondition {
+export interface WeatherCondition {
   text: string;
-  icon: string;
   code: number;
 }
 
-export interface WeatherApiAirQuality {
-  co?: number;
-  no2?: number;
-  o3?: number;
-  so2?: number;
-  pm2_5?: number;
-  pm10?: number;
-  "us-epa-index"?: number;
-  "gb-defra-index"?: number;
+export interface AirQuality {
+  pm2_5: number;
+  pm10: number;
+  o3: number;
+  no2: number;
+  so2: number;
+  us_epa_index: number;
 }
 
-export interface WeatherApiCurrent {
-  temp_c: number;
-  temp_f: number;
-  feelslike_c: number;
-  feelslike_f: number;
+export interface CurrentWeather {
+  temperature: number;
+  feelsLike: number;
   humidity: number;
-  wind_kph: number;
-  wind_mph: number;
-  pressure_mb: number;
-  vis_km: number;
-  vis_miles: number;
-  uv: number;
-  cloud: number;
-  is_day: 0 | 1;
-  precip_mm: number;
-  condition: WeatherApiCondition;
-  air_quality?: WeatherApiAirQuality;
+  windSpeed: number;
+  windGusts: number;
+  pressure: number;
+  visibility: number;
+  uvIndex: number;
+  cloudCover: number;
+  isDay: boolean;
+  precipitation: number;
+  rain: number;
+  showers: number;
+  snowfall: number;
+  dewPoint: number;
+  condition: WeatherCondition;
+  airQuality?: AirQuality;
 }
 
-export interface WeatherApiHour {
-  time_epoch: number;
-  time: string;
-  temp_c: number;
-  temp_f: number;
-  feelslike_c: number;
-  feelslike_f: number;
-  chance_of_rain?: number;
-  chance_of_snow?: number;
-  will_it_rain: 0 | 1;
-  will_it_snow: 0 | 1;
+export interface HourlyForecast {
+  time: number; // Unix timestamp
+  temperature: number;
+  feelsLike: number;
+  precipitationProbability: number;
+  condition: WeatherCondition;
   humidity: number;
-  cloud: number;
-  uv: number;
-  is_day: 0 | 1;
-  wind_kph: number;
-  wind_mph: number;
-  vis_km: number;
-  vis_miles: number;
-  condition: WeatherApiCondition;
+  windSpeed: number;
+  uvIndex: number;
+  isDay: boolean;
 }
 
-export interface WeatherApiForecastDay {
+export interface DailyForecast {
   date: string;
-  date_epoch: number;
-  day: {
-    maxtemp_c: number;
-    maxtemp_f: number;
-    mintemp_c: number;
-    mintemp_f: number;
-    avghumidity: number;
-    daily_chance_of_rain?: number;
-    uv: number;
-    condition: WeatherApiCondition;
-  };
-  astro: {
-    sunrise: string;
-    sunset: string;
-  };
-  hour: WeatherApiHour[];
+  maxTemp: number;
+  minTemp: number;
+  precipitationProbability: number;
+  precipitationSum: number;
+  uvIndex: number;
+  sunrise: string;
+  sunset: string;
+  moonPhase: number; // 0-1
+  condition: WeatherCondition;
 }
 
-export interface WeatherApiLocation {
-  name: string;
-  region: string;
-  country: string;
-  lat: number;
-  lon: number;
-  tz_id: string;
-  localtime_epoch: number;
-  localtime: string;
-}
-
-export interface WeatherApiForecastResponse {
-  location: WeatherApiLocation;
-  current: WeatherApiCurrent;
-  forecast: {
-    forecastday: WeatherApiForecastDay[];
+export interface WeatherApiResponse {
+  location: {
+    name: string;
+    country: string;
+    lat: number;
+    lon: number;
+    timezone: string;
   };
-}
-
-export interface WeatherSearchSuggestion {
-  id: number;
-  name: string;
-  region: string;
-  country: string;
-  lat: number;
-  lon: number;
-  url: string;
+  current: CurrentWeather;
+  hourly: HourlyForecast[];
+  daily: DailyForecast[];
 }
 
 export interface RecentSearchItem {
-  id: string;
-  query: string;
-  label: string;
+  id: string; // "lat,lon"
+  name: string;
+  country: string;
   searchedAt: number;
 }
+
+export type AppTheme = "light" | "dark";

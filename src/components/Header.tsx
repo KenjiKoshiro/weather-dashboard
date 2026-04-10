@@ -1,162 +1,142 @@
-import type { RecentSearchItem, UnitSystem, WeatherSearchSuggestion } from "../types/weather";
-import { formatLocationLabel } from "../utils/weatherFormat";
+import { useState, useEffect, useRef } from "react";
+import { Search, MapPin, Sun, Moon, Wind, Thermometer } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { searchLocations, GeoLocation } from "../services/geocoding";
+import { UnitSystem } from "../types/weather";
 
 interface HeaderProps {
-  query: string;
-  onQueryChange: (value: string) => void;
-  onSearch: (value: string) => void;
+  onSearch: (location: GeoLocation) => void;
   onUseLocation: () => void;
   onToggleUnit: () => void;
   onToggleTheme: () => void;
   unit: UnitSystem;
   theme: "light" | "dark";
-  suggestions: WeatherSearchSuggestion[];
-  recentSearches: RecentSearchItem[];
   isSearching: boolean;
 }
 
 export function Header({
-  query,
-  onQueryChange,
   onSearch,
   onUseLocation,
   onToggleUnit,
   onToggleTheme,
   unit,
   theme,
-  suggestions,
-  recentSearches,
   isSearching,
 }: HeaderProps) {
-  return (
-    <header className="rounded-[2rem] border border-white/30 bg-white/55 p-5 shadow-2xl shadow-slate-900/10 backdrop-blur-2xl dark:border-white/10 dark:bg-slate-900/45">
-      <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.4em] text-sky-600 dark:text-sky-300">
-            Real-time weather
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
-            Atmos Weather Dashboard
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-            Search cities worldwide, track current conditions, monitor hourly changes, and stay ahead with a live 7-day forecast.
-          </p>
-        </div>
+  const [query, setQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<GeoLocation[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={onToggleTheme}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 transition hover:-translate-y-0.5 hover:bg-white dark:border-white/10 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            <span>{theme === "dark" ? "☀️" : "🌙"}</span>
-            {theme === "dark" ? "Light mode" : "Dark mode"}
-          </button>
-          <button
-            type="button"
-            onClick={onToggleUnit}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 transition hover:-translate-y-0.5 hover:bg-white dark:border-white/10 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            <span>🌡️</span>
-            Units: {unit === "c" ? "°C" : "°F"}
-          </button>
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (query.length >= 2) {
+        const results = await searchLocations(query);
+        setSuggestions(results);
+      } else {
+        setSuggestions([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <header className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex items-center gap-3">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-linear-to-br from-blue-500 to-cyan-400 text-white shadow-lg shadow-blue-500/20">
+          <Wind className="h-6 w-6" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">ZENITH</h1>
+          <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-slate-400 dark:text-slate-200">Weather Intelligence</p>
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(280px,0.9fr)]">
-        <div className="relative">
-          <div className="flex flex-col gap-3 rounded-[1.75rem] border border-white/40 bg-white/70 p-3 shadow-lg shadow-slate-900/5 backdrop-blur dark:border-white/10 dark:bg-slate-950/40 sm:flex-row sm:items-center">
-            <div className="flex-1">
-              <label htmlFor="city-search" className="sr-only">
-                Search weather by city
-              </label>
-              <input
-                id="city-search"
-                value={query}
-                onChange={(event) => onQueryChange(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    onSearch(query);
-                  }
-                }}
-                placeholder="Search by city, postcode, or coordinates"
-                className="h-12 w-full rounded-2xl border border-transparent bg-transparent px-4 text-sm text-slate-900 outline-none placeholder:text-slate-400 dark:text-white dark:placeholder:text-slate-400"
-              />
+      <div className="flex flex-1 items-center gap-4 lg:max-w-2xl">
+        <div className="relative flex-1" ref={dropdownRef}>
+          <div className="group relative">
+            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+              <Search className={`h-5 w-5 transition-colors ${isSearching ? "text-blue-500 animate-pulse" : "text-slate-400 dark:text-slate-300"}`} />
             </div>
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={() => onSearch(query)}
-                disabled={isSearching}
-                className="inline-flex h-12 items-center justify-center rounded-2xl bg-slate-900 px-5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400"
-              >
-                {isSearching ? "Searching..." : "Search"}
-              </button>
-              <button
-                type="button"
-                onClick={onUseLocation}
-                className="inline-flex h-12 items-center justify-center rounded-2xl border border-slate-200/80 bg-white/80 px-5 text-sm font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:bg-white dark:border-white/10 dark:bg-slate-800/70 dark:text-slate-100 dark:hover:bg-slate-800"
-              >
-                Use my location
-              </button>
-            </div>
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setShowSuggestions(true);
+              }}
+              onFocus={() => setShowSuggestions(true)}
+              placeholder="Search location (e.g. Tokyo, JP)"
+              className="zenith-glass w-full rounded-3xl py-4 pl-12 pr-4 text-sm font-medium outline-hidden ring-blue-500/20 focus:ring-4"
+            />
           </div>
 
-          {(suggestions.length > 0 || recentSearches.length > 0) && query.trim() ? (
-            <div className="absolute z-20 mt-3 w-full overflow-hidden rounded-[1.5rem] border border-white/30 bg-white/90 shadow-2xl shadow-slate-900/10 backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/90">
-              {suggestions.length > 0 ? (
-                <div className="border-b border-slate-200/70 p-3 dark:border-white/10">
-                  <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500">
-                    Suggestions
-                  </p>
-                  <div className="space-y-1">
-                    {suggestions.slice(0, 5).map((suggestion) => {
-                      const label = formatLocationLabel(
-                        suggestion.name,
-                        suggestion.region,
-                        suggestion.country
-                      );
-
-                      return (
-                        <button
-                          key={`${suggestion.id}-${suggestion.lat}-${suggestion.lon}`}
-                          type="button"
-                          onClick={() => onSearch(label)}
-                          className="flex w-full items-center justify-between rounded-2xl px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800/80"
-                        >
-                          <span>{label}</span>
-                          <span className="text-xs text-slate-400 dark:text-slate-500">↗</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : null}
-
-              {recentSearches.length > 0 ? (
-                <div className="p-3">
-                  <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500">
-                    Recent searches
-                  </p>
-                  <div className="flex flex-wrap gap-2 px-3 pb-2">
-                    {recentSearches.slice(0, 6).map((item) => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => onSearch(item.query)}
-                        className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
+          <AnimatePresence>
+            {showSuggestions && suggestions.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="zenith-glass absolute left-0 right-0 z-50 mt-2 overflow-hidden rounded-[2rem] p-2"
+              >
+                {suggestions.map((loc, index) => (
+                  <button
+                    key={`${loc.lat}-${loc.lon}-${index}`}
+                    onClick={() => {
+                      onSearch(loc);
+                      setQuery("");
+                      setShowSuggestions(false);
+                    }}
+                    className="flex w-full items-center gap-3 rounded-2xl p-3 text-left transition-colors hover:bg-blue-500/10"
+                  >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/5">
+                      <MapPin className="h-4 w-4 text-slate-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">{loc.name}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-300">{loc.country}</p>
+                    </div>
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
+        <button
+          onClick={onUseLocation}
+          className="zenith-glass hidden flex-shrink-0 items-center justify-center rounded-2xl p-4 text-blue-500 transition-transform active:scale-95 sm:flex"
+          title="Use current location"
+        >
+          <MapPin className="h-5 w-5" />
+        </button>
+
+        <div className="flex shrink-0 items-center gap-2 rounded-[2rem] border border-white/20 bg-white/10 p-1.5 backdrop-blur-md dark:border-white/5 dark:bg-black/20">
+          <button
+            onClick={onToggleUnit}
+            className="flex h-10 w-10 items-center justify-center rounded-xl transition-all hover:bg-white/10"
+          >
+            <Thermometer className="h-5 w-5" />
+          </button>
+          <div className="h-4 w-px bg-white/10" />
+          <button
+            onClick={onToggleTheme}
+            className="flex h-10 w-10 items-center justify-center rounded-xl transition-all hover:bg-white/10"
+          >
+            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
     </header>
   );
