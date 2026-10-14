@@ -6,12 +6,12 @@ export interface WeatherCondition {
 }
 
 export interface AirQuality {
-  pm2_5: number;
-  pm10: number;
-  o3: number;
-  no2: number;
-  so2: number;
-  us_epa_index: number;
+  pm2_5: number | null;
+  pm10: number | null;
+  o3: number | null;
+  no2: number | null;
+  so2: number | null;
+  us_aqi: number;
 }
 
 export interface CurrentWeather {
@@ -22,10 +22,11 @@ export interface CurrentWeather {
   windGusts: number;
   pressure: number;
   visibility: number;
-  uvIndex: number;
+  uvIndex: number | null;
   cloudCover: number;
   isDay: boolean;
   precipitation: number;
+  precipitationIntervalMinutes: number;
   rain: number;
   showers: number;
   snowfall: number;
@@ -42,7 +43,7 @@ export interface HourlyForecast {
   condition: WeatherCondition;
   humidity: number;
   windSpeed: number;
-  uvIndex: number;
+  uvIndex: number | null;
   isDay: boolean;
 }
 
@@ -52,10 +53,7 @@ export interface DailyForecast {
   minTemp: number;
   precipitationProbability: number;
   precipitationSum: number;
-  uvIndex: number;
-  sunrise: string;
-  sunset: string;
-  moonPhase: number; // 0-1
+  uvIndex: number | null;
   condition: WeatherCondition;
 }
 

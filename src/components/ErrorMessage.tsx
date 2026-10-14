@@ -18,8 +18,8 @@ export function ErrorMessage({ message, onRetry }: ErrorMessageProps) {
           <AlertCircle className="h-8 w-8" />
         </div>
         
-        <div className="space-y-2">
-          <h3 className="text-xl font-bold tracking-tight">Cosmic Interference</h3>
+        <div className="space-y-2" role="alert">
+          <h3 className="text-xl font-bold tracking-tight">Weather is temporarily unavailable</h3>
           <p className="text-sm text-slate-500 dark:text-slate-400">
             {message || "We encountered an atmospheric disturbance while fetching your data."}
           </p>
@@ -31,7 +31,7 @@ export function ErrorMessage({ message, onRetry }: ErrorMessageProps) {
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-500 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/30 transition-all hover:bg-blue-600 active:scale-95"
           >
             <RefreshCcw className="h-4 w-4" />
-            Recalibrate Sensors
+            Try again
           </button>
         )}
       </motion.div>

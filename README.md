@@ -1,116 +1,52 @@
-# Atmos Weather Dashboard
+# Zenith Weather Dashboard
 
-A production-style real-time weather dashboard built with React, Vite, TypeScript, and Tailwind CSS.
+React, Vite, TypeScript and Tailwind dashboard powered by [Open-Meteo](https://open-meteo.com/), selected from the [Public APIs weather list](https://github.com/public-apis/public-apis#weather).
 
-## Features
+## Run and verify
 
-- Search weather by city name
-- Press Enter or click Search to fetch data
-- Live current weather conditions
-- Next 12 hours hourly forecast
-- 7-day forecast
-- Weather highlight cards
-- Geolocation-based local weather lookup
-- Recent searches saved in localStorage
-- Celsius/Fahrenheit toggle
-- Light/Dark mode toggle
-- Auto-refresh every 5 minutes
-- Search suggestions powered by WeatherAPI search endpoint
-- Loading and error states
-- Responsive dashboard UI
-
-## Folder Structure
-
-```text
-.
-├── index.html
-├── README.md
-├── src
-│   ├── App.tsx
-│   ├── index.css
-│   ├── main.tsx
-│   ├── vite-env.d.ts
-│   ├── components
-│   │   ├── CurrentWeather.tsx
-│   │   ├── DailyForecast.tsx
-│   │   ├── ErrorMessage.tsx
-│   │   ├── Header.tsx
-│   │   ├── HourlyForecast.tsx
-│   │   ├── Loader.tsx
-│   │   ├── RecentSearches.tsx
-│   │   ├── SectionHeading.tsx
-│   │   └── WeatherHighlights.tsx
-│   ├── services
-│   │   └── weatherApi.ts
-│   ├── types
-│   │   └── weather.ts
-│   └── utils
-│       ├── storage.ts
-│       └── weatherFormat.ts
-└── ...project config files
-```
-
-## API Setup
-
-This app uses [WeatherAPI.com](https://www.weatherapi.com/).
-
-1. Create a free WeatherAPI account.
-2. Copy your API key.
-3. Create a `.env` file in the project root.
-4. Add this variable:
-
-```env
-VITE_WEATHER_API_KEY=your_weatherapi_key_here
-```
-
-> Important: Vite only exposes environment variables that start with `VITE_`.
-
-## Run Locally
-
-```bash
-npm install
+```sh
+npm ci
 npm run dev
-```
-
-Then open the local Vite URL in your browser.
-
-## Build for Production
-
-```bash
+npm test
+npx tsc --noEmit
 npm run build
 ```
 
-## Data Flow Explanation
+No API key, account or environment variable is required. The former `VITE_WEATHER_API_KEY` is no longer read. Existing Vercel variables can remain unused; no credentials belong in source control.
 
-1. The user enters a city in the search input.
-2. `App.tsx` triggers the weather service function.
-3. `src/services/weatherApi.ts` calls WeatherAPI forecast endpoint:
-   - `forecast.json` for current, hourly, and daily weather
-   - `search.json` for autocomplete suggestions
-4. The API response is stored in React state.
-5. State is passed into modular dashboard components:
-   - `CurrentWeather` shows live conditions
-   - `HourlyForecast` shows the next 12 hours
-   - `DailyForecast` shows the next 7 days
-   - `WeatherHighlights` shows atmospheric metrics
-6. Recent searches, unit preference, and theme preference are stored in `localStorage`.
-7. The app automatically refreshes the active city weather every 5 minutes.
+## Data and behavior
 
-## Important Implementation Notes
+- Forecast API: modelled current conditions, 24 upcoming hourly slots, five daily forecasts, UV, dew point and day/night conditions. Temperatures use Celsius internally and convert in the UI.
+- Geocoding API: type at least two characters and select a matching place. Names include region and country to distinguish cities.
+- Air Quality API: US AQI (0–500 scale) and pollutant concentrations. Missing/unavailable air quality does not block weather; unavailable values display a dash.
+- Hourly times use the selected location's IANA timezone. Daily dates use the API's documented daily UTC offset. Precipitation is labeled with its current aggregation interval.
+- Geolocation requests browser permission and fetches the coordinates as “Your location”; Open-Meteo does not provide reverse geocoding.
+- Recent places, units and theme remain in localStorage. Forecasts refresh every five minutes. Requests have timeouts and weather HTTP/malformed-data failures show a retry state.
 
-- Weather icons are read directly from WeatherAPI condition icon URLs.
-- The app handles invalid cities and missing API key errors.
-- The geolocation button fetches weather for the user’s current coordinates.
-- The background styling changes based on weather conditions in light mode.
+## Hosting and usage
 
-## Future Improvements
+Vercel builds with `npm run build` and serves `dist`. The free Open-Meteo endpoint is for **non-commercial use** and is rate-limited, without an uptime guarantee. Commercial use requires a [subscription](https://open-meteo.com/en/pricing) and a server-side integration for its key; do not put a paid key in Vite client variables.
 
-- Add precipitation charts using a chart library
-- Add weather alerts panel when alert data is available
-- Add radar or weather map integration
-- Add favorite pinned cities
-- Add multilingual support
-- Add accessibility enhancements like live regions for refresh updates
-- Add offline caching with service workers
-- Add sunrise/sunset progress visualization
-- Add more detailed air quality breakdown card
+Attribution is displayed for Open-Meteo, GeoNames and CAMS. See the provider's [forecast](https://open-meteo.com/en/docs), [geocoding](https://open-meteo.com/en/docs/geocoding-api), and [air-quality](https://open-meteo.com/en/docs/air-quality-api) documentation.
+
+## Changes in this release
+
+- Rebuilt the dashboard with a sage current-weather panel, five-day sidebar, hourly outlook and consistent light/dark themes.
+- Added responsive desktop, tablet and phone layouts, visible keyboard focus, a skip link, labeled controls, 44px touch targets and reduced-motion support.
+- Replaced OpenWeather with keyless Open-Meteo weather, geocoding and air-quality requests. No new runtime dependencies were added.
+- Expanded the forecast to 24 hourly slots and corrected WMO weather icons, location time zones, US AQI thresholds and precipitation intervals.
+- Fixed Fahrenheit dew-point conversion, zero UV readings, initial-load retry and stale city-search results. Missing air quality no longer hides the forecast.
+- Removed unsupported moon-phase and unvalidated comfort-score displays. Missing data is explicitly marked unavailable.
+
+## Release checks and troubleshooting
+
+`npm test` runs 14 regression tests covering API mappings, invalid coordinates, failed/malformed responses, optional air-quality outages, AQI boundaries, temperature conversion, zero UV and accessible controls. `npx tsc --noEmit` checks types; `npm run build` validates the production bundle.
+
+Before release, verify the Vercel preview and repeat city search, refresh and temperature/theme toggles on the production URL. An HTTP 200 alone does not prove the browser can fetch weather. Check browser errors and actual weather values as well.
+
+If weather fails, use **Try again** or search another city. Rate limits and upstream outages may require waiting. An air-quality dash can occur independently of the forecast. Location access requires HTTPS and browser permission; if denied, city search remains available.
+
+The project uses Vercel's Git integration: updates to the PR branch create previews; merging into `main` triggers production deployment. Inspect the deployment's commit and Ready status before checking the public site. If a regression occurs, fix it on a branch, rerun the checks, and release the correction. Do not commit `.env*`, `.vercel`, or generated build output.
+
+Live site: https://weather-dashboard-ochre-ten.vercel.app/
+

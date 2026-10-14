@@ -1,4 +1,4 @@
-import type { UnitSystem, WeatherApiAirQuality } from "../types/weather";
+import type { UnitSystem, AirQuality } from "../types/weather";
 
 export function formatFullDateTime(
   value: number | string,
@@ -58,25 +58,15 @@ export function normalizeIconUrl(icon: string) {
   return icon.startsWith("//") ? `https:${icon}` : icon;
 }
 
-export function getAqiLabel(airQuality?: WeatherApiAirQuality) {
-  const value = airQuality?.["us-epa-index"];
-
-  switch (value) {
-    case 1:
-      return "Good";
-    case 2:
-      return "Moderate";
-    case 3:
-      return "Unhealthy for sensitive groups";
-    case 4:
-      return "Unhealthy";
-    case 5:
-      return "Very unhealthy";
-    case 6:
-      return "Hazardous";
-    default:
-      return "Unavailable";
-  }
+export function getAqiLabel(airQuality?: AirQuality) {
+  const value = airQuality?.us_aqi;
+  if (value === undefined || !Number.isFinite(value) || value < 0) return "Unavailable";
+  if (value <= 50) return "Good";
+  if (value <= 100) return "Moderate";
+  if (value <= 150) return "Unhealthy for sensitive groups";
+  if (value <= 200) return "Unhealthy";
+  if (value <= 300) return "Very unhealthy";
+  return "Hazardous";
 }
 
 export function formatLocationLabel(name: string, region: string, country: string) {

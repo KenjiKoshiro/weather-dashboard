@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { 
   WeatherApiResponse, 
   UnitSystem, 
   RecentSearchItem 
 } from "../types/weather";
 import { fetchZenithWeather } from "../services/weatherApi";
-import { reverseGeocode, GeoLocation } from "../services/geocoding";
+import { GeoLocation } from "../services/geocoding";
 import { 
   loadRecentSearches, 
   saveRecentSearches, 
@@ -74,17 +74,15 @@ export function useWeather() {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-        const geoInfo = await reverseGeocode(latitude, longitude);
-        if (geoInfo) {
-          fetchWeather(latitude, longitude, geoInfo.name, geoInfo.country);
-        } else {
-          fetchWeather(latitude, longitude, "Your Location", "Unknown");
-        }
+        // Open-Meteo has no reverse-geocoding endpoint. Keep the exact coordinates
+        // and label them honestly instead of inventing a city name.
+        fetchWeather(latitude, longitude, "Your location", "");
       },
       (err) => {
         setError(err.message);
         setLoading(false);
-      }
+      },
+      { timeout: 10000, maximumAge: 300000 }
     );
   }, [fetchWeather]);
 
@@ -151,6 +149,6 @@ export function useWeather() {
     toggleUnit,
     toggleTheme,
     removeRecentSearch,
-    refreshWeather: () => weather && fetchWeather(weather.location.lat, weather.location.lon, weather.location.name, weather.location.country, false),
+    refreshWeather: () => fetchWeather(weather?.location.lat ?? DEFAULT_LAT, weather?.location.lon ?? DEFAULT_LON, weather?.location.name ?? DEFAULT_CITY, weather?.location.country ?? "USA", false),
   };
 }
