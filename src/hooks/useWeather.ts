@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { 
   WeatherApiResponse, 
   UnitSystem, 
@@ -151,6 +151,6 @@ export function useWeather() {
     toggleUnit,
     toggleTheme,
     removeRecentSearch,
-    refreshWeather: () => weather && fetchWeather(weather.location.lat, weather.location.lon, weather.location.name, weather.location.country, false),
+    refreshWeather: () => fetchWeather(weather?.location.lat ?? DEFAULT_LAT, weather?.location.lon ?? DEFAULT_LON, weather?.location.name ?? DEFAULT_CITY, weather?.location.country ?? "USA", false),
   };
 }
