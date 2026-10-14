@@ -9,7 +9,7 @@ after(() => server.close());
 const { WeatherHighlights } = await server.ssrLoadModule('/src/components/WeatherHighlights.tsx');
 const { HourlyForecast } = await server.ssrLoadModule('/src/components/HourlyForecast.tsx');
 const { Header } = await server.ssrLoadModule('/src/components/Header.tsx');
-const data = { windGusts: 12, pressure: 1005, dewPoint: 10, precipitation: 0, uvIndex: 0, visibility: 10 };
+const data = { windGusts: 12, pressure: 1005, dewPoint: 10, precipitation: 0, uvIndex: null, visibility: 10, precipitationIntervalMinutes: 15 };
 
 test('dew point follows Fahrenheit, with explicit unavailable UV and AQI', () => {
   const html = renderToStaticMarkup(createElement(WeatherHighlights, { data, unit: 'f' }));
@@ -18,15 +18,15 @@ test('dew point follows Fahrenheit, with explicit unavailable UV and AQI', () =>
   assert.match(html, /Not provided by this data source/);
   assert.doesNotMatch(html, /New Moon|Thermal Comfort/);
 });
-test('provider AQI uses its five-point labels', () => {
-  const html = renderToStaticMarkup(createElement(WeatherHighlights, { data: { ...data, airQuality: { us_epa_index: 2, pm2_5: 3, o3: 4, no2: 5 } }, unit: 'c' }));
-  assert.match(html, /Fair/);
-  assert.match(html, /2\/5/);
+test('provider AQI uses US AQI thresholds', () => {
+  const html = renderToStaticMarkup(createElement(WeatherHighlights, { data: { ...data, airQuality: { us_aqi: 75, pm2_5: 3, o3: 4, no2: 5 } }, unit: 'c' }));
+  assert.match(html, /Moderate/);
+  assert.match(html, /US AQI 75/);
   assert.match(html, /10<span>°C/);
 });
 test('forecast renders actual slot, units and zero rain without calling it Now', () => {
   const hours = [{ time: 1792000000, temperature: 0, isDay: true, condition: { code: 800, text: 'Clear' }, precipitationProbability: 0 }];
-  const html = renderToStaticMarkup(createElement(HourlyForecast, { hours, unit: 'f' }));
+  const html = renderToStaticMarkup(createElement(HourlyForecast, { hours, unit: 'f', timezone: 'Asia/Bangkok' }));
   assert.match(html, /32°F/);
   assert.match(html, /0% chance of precipitation/);
   assert.match(html, /datetime=/i);
@@ -39,4 +39,15 @@ test('header exposes destination unit and theme plus location access', () => {
   assert.match(html, /aria-label="Switch to dark theme"/);
   assert.match(html, /aria-label="Use current location"/);
   assert.match(html, /for="city-search"/);
+});
+
+const { getAqiLabel } = await server.ssrLoadModule('/src/utils/weatherFormat.ts');
+test('US AQI boundaries include zero and all six categories', () => {
+  const labels = [[0, 'Good'], [50, 'Good'], [51, 'Moderate'], [100, 'Moderate'], [101, 'Unhealthy for sensitive groups'], [150, 'Unhealthy for sensitive groups'], [151, 'Unhealthy'], [200, 'Unhealthy'], [201, 'Very unhealthy'], [300, 'Very unhealthy'], [301, 'Hazardous']];
+  for (const [us_aqi, expected] of labels) assert.equal(getAqiLabel({ us_aqi }), expected);
+});
+test('zero UV is a real reading, not missing data', () => {
+  const html = renderToStaticMarkup(createElement(WeatherHighlights, { data: { ...data, uvIndex: 0 }, unit: 'c' }));
+  assert.match(html, /0.0<span/);
+  assert.match(html, /Modelled current UV index/);
 });

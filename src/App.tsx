@@ -35,7 +35,7 @@ export default function App() {
             <div className="dashboard-grid" aria-busy={loading}>
               <div className="forecast-main">
                 <CurrentWeather data={weather.current} location={weather.location} unit={unit} />
-                <HourlyForecast hours={weather.hourly} unit={unit} />
+                <HourlyForecast hours={weather.hourly} unit={unit} timezone={weather.location.timezone} />
                 <WeatherHighlights data={weather.current} unit={unit} />
               </div>
               <aside className="forecast-aside" aria-label="Extended forecast and recent places">
@@ -48,15 +48,16 @@ export default function App() {
                   }
                 }} />
                 <div className="forecast-note"><span className="status-dot" />
-                  <div><strong>{loading ? "Updating forecast" : "Connected to OpenWeather"}</strong><p>Forecasts refresh automatically. Times are shown in your device’s local time.</p></div>
+                  <div><strong>{loading ? "Updating forecast" : "Connected to Open-Meteo"}</strong><p>Forecasts refresh automatically. Forecast times use {weather.location.timezone.replace(/_/g, " ")}.</p></div>
                 </div>
               </aside>
             </div>
           )}
         </main>
         <footer><span>ZENITH <span className="footer-divider">/</span> A window to the weather.</span>
-          <a href="https://openweathermap.org/" target="_blank" rel="noreferrer">Weather by OpenWeather <ArrowUpRight size={14} aria-hidden="true" /></a>
-          <a href="https://www.openstreetmap.org/" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a>
+          <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Weather by Open-Meteo <ArrowUpRight size={14} aria-hidden="true" /></a>
+          <a href="https://www.geonames.org/" target="_blank" rel="noreferrer">Locations: GeoNames</a>
+          <a href="https://atmosphere.copernicus.eu/" target="_blank" rel="noreferrer">Air quality: CAMS</a>
         </footer>
       </div>
     </MotionConfig>

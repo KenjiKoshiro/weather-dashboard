@@ -9,8 +9,8 @@ export function WeatherHighlights({ data, unit }: { data: CurrentWeather; unit: 
     { icon: Wind, label: "Wind gusts", value: data.windGusts.toFixed(1), unit: "km/h", note: "Peak wind speed" },
     { icon: Gauge, label: "Pressure", value: Math.round(data.pressure), unit: "hPa", note: "Atmospheric pressure" },
     { icon: Droplets, label: "Dew point", value: getTemperature(data.dewPoint, data.dewPoint * 9 / 5 + 32, unit), unit: getTemperatureUnit(unit), note: "Estimated condensation point" },
-    { icon: CloudRain, label: "Precipitation", value: data.precipitation.toFixed(1), unit: "mm", note: "Over the past hour" },
-    { icon: Sun, label: "UV index", value: data.uvIndex > 0 ? data.uvIndex.toFixed(1) : "—", unit: "", note: data.uvIndex > 0 ? "Reported UV index" : "Not provided by this data source" },
+    { icon: CloudRain, label: "Precipitation", value: data.precipitation.toFixed(1), unit: "mm", note: `Over the past ${data.precipitationIntervalMinutes} minutes` },
+    { icon: Sun, label: "UV index", value: data.uvIndex != null ? data.uvIndex.toFixed(1) : "—", unit: "", note: data.uvIndex != null ? "Modelled current UV index" : "Not provided by this data source" },
     { icon: Eye, label: "Visibility", value: data.visibility.toFixed(1), unit: "km", note: "Horizontal viewing distance" },
   ];
   return (
@@ -19,7 +19,7 @@ export function WeatherHighlights({ data, unit }: { data: CurrentWeather; unit: 
       <div className="highlights-grid">
         <div className="panel air-quality">
           <div className="metric-label"><Activity size={18} aria-hidden="true" /><span>Air quality</span></div>
-          <div className="air-summary"><strong>{airLabel}</strong><span>OpenWeather scale {aqi ? `${aqi.us_epa_index}/5` : "unavailable"}</span></div>
+          <div className="air-summary"><strong>{airLabel}</strong><span>US AQI {aqi ? Math.round(aqi.us_aqi) : "unavailable"}</span></div>
           <dl className="air-components"><div><dt>PM2.5</dt><dd>{aqi?.pm2_5 ?? "—"}</dd></div><div><dt>O₃</dt><dd>{aqi?.o3 ?? "—"}</dd></div><div><dt>NO₂</dt><dd>{aqi?.no2 ?? "—"}</dd></div></dl>
           <p className="section-caption">Pollutant concentrations in µg/m³</p>
         </div>

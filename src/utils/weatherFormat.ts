@@ -59,22 +59,14 @@ export function normalizeIconUrl(icon: string) {
 }
 
 export function getAqiLabel(airQuality?: AirQuality) {
-  const value = airQuality?.us_epa_index;
-
-  switch (value) {
-    case 1:
-      return "Good";
-    case 2:
-      return "Fair";
-    case 3:
-      return "Moderate";
-    case 4:
-      return "Poor";
-    case 5:
-      return "Very poor";
-    default:
-      return "Unavailable";
-  }
+  const value = airQuality?.us_aqi;
+  if (value === undefined || !Number.isFinite(value) || value < 0) return "Unavailable";
+  if (value <= 50) return "Good";
+  if (value <= 100) return "Moderate";
+  if (value <= 150) return "Unhealthy for sensitive groups";
+  if (value <= 200) return "Unhealthy";
+  if (value <= 300) return "Very unhealthy";
+  return "Hazardous";
 }
 
 export function formatLocationLabel(name: string, region: string, country: string) {

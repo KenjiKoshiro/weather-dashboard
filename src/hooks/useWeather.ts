@@ -5,7 +5,7 @@ import {
   RecentSearchItem 
 } from "../types/weather";
 import { fetchZenithWeather } from "../services/weatherApi";
-import { reverseGeocode, GeoLocation } from "../services/geocoding";
+import { GeoLocation } from "../services/geocoding";
 import { 
   loadRecentSearches, 
   saveRecentSearches, 
@@ -74,17 +74,15 @@ export function useWeather() {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-        const geoInfo = await reverseGeocode(latitude, longitude);
-        if (geoInfo) {
-          fetchWeather(latitude, longitude, geoInfo.name, geoInfo.country);
-        } else {
-          fetchWeather(latitude, longitude, "Your Location", "Unknown");
-        }
+        // Open-Meteo has no reverse-geocoding endpoint. Keep the exact coordinates
+        // and label them honestly instead of inventing a city name.
+        fetchWeather(latitude, longitude, "Your location", "");
       },
       (err) => {
         setError(err.message);
         setLoading(false);
-      }
+      },
+      { timeout: 10000, maximumAge: 300000 }
     );
   }, [fetchWeather]);
 

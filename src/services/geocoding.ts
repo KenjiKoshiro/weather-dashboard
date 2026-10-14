@@ -7,61 +7,26 @@ export interface GeoLocation {
   fullLabel: string;
 }
 
-const API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
-const GEO_BASE_URL = "https://api.openweathermap.org/geo/1.0";
-
-/**
- * Fetch location suggestions from OpenWeatherMap Geocoding API
- */
 export async function searchLocations(query: string): Promise<GeoLocation[]> {
-  if (!query.trim() || query.length < 2) return [];
-
-  const url = `${GEO_BASE_URL}/direct?q=${encodeURIComponent(query)}&limit=6&appid=${API_KEY}`;
-
+  const name = query.trim();
+  if (name.length < 2) return [];
+  const url = new URL("https://geocoding-api.open-meteo.com/v1/search");
+  url.search = new URLSearchParams({ name, count: "6", language: "en", format: "json" }).toString();
   try {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error("Search failed");
-
+    const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    if (!response.ok) return [];
     const data = await response.json();
-
-    return data.map((item: any) => ({
-      name: item.name,
-      lat: item.lat,
-      lon: item.lon,
-      country: item.country,
-      state: item.state,
-      fullLabel: [item.name, item.state, item.country].filter(Boolean).join(", "),
-    }));
-  } catch (error) {
-    console.error("Geocoding error:", error);
+    if (!Array.isArray(data.results)) return [];
+    return data.results.flatMap((value: unknown) => {
+      if (!value || typeof value !== "object") return [];
+      const item = value as Record<string, unknown>;
+      if (typeof item.name !== "string" || typeof item.latitude !== "number" || typeof item.longitude !== "number" || !Number.isFinite(item.latitude) || !Number.isFinite(item.longitude) || Math.abs(item.latitude) > 90 || Math.abs(item.longitude) > 180) return [];
+      const country = typeof item.country === "string" ? item.country : "";
+      const state = typeof item.admin1 === "string" ? item.admin1 : undefined;
+      return [{ name: item.name, lat: item.latitude, lon: item.longitude, country, state,
+        fullLabel: [item.name, state, country].filter(Boolean).join(", ") }];
+    });
+  } catch {
     return [];
-  }
-}
-
-/**
- * Reverse geocode coordinates using OpenWeatherMap
- */
-export async function reverseGeocode(lat: number, lon: number): Promise<GeoLocation | null> {
-  const url = `${GEO_BASE_URL}/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${API_KEY}`;
-
-  try {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error("Reverse geocoding failed");
-
-    const data = await response.json();
-    const item = data[0];
-    if (!item) return null;
-
-    return {
-      name: item.name,
-      lat: lat,
-      lon: lon,
-      country: item.country,
-      state: item.state,
-      fullLabel: [item.name, item.state, item.country].filter(Boolean).join(", "),
-    };
-  } catch (error) {
-    console.error("Reverse geocoding error:", error);
-    return null;
   }
 }
